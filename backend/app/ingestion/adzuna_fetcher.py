@@ -53,6 +53,6 @@ def save_jobs(jobs):
 
 if __name__ == "__main__":
     print("Fetching jobs from Adzuna...")
-    jobs = fetch_jobs(query="software engineer", location="us", pages=5)
+    jobs = fetch_jobs(query="entry level software developer", location="us", pages=5)
     print(f"Total fetched: {len(jobs)}")
     save_jobs(jobs)
