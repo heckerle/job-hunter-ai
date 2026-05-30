@@ -5,3 +5,4 @@ Credentials.txt
 __pycache__/
 *.pyc
 .DS_Store
+backend/resume.pdf
