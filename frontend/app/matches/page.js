@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const recommendationColors = {
   strong_match: 'bg-green-900 text-green-300',
@@ -13,6 +14,7 @@ const recommendationColors = {
 export default function Matches() {
   const [matches, setMatches] = useState([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     fetch('http://localhost:8000/jobs/matches')
@@ -37,7 +39,7 @@ export default function Matches() {
       ) : (
         <div className="grid gap-6">
           {matches.map((job, i) => (
-            <div key={job.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <div key={job.id} onClick={() => router.push(`/jobs/${job.id}`)} className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-1">

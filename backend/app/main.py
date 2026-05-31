@@ -61,6 +61,20 @@ def get_matches():
     scored.sort(key=lambda x: x[0], reverse=True)
     top_jobs = scored[:10]
 
+    @app.get("/jobs/{job_id}")
+    def get_job(job_id: str):
+        job = supabase.table("jobs").select("*").eq("id", job_id).execute().data
+        if not job:
+            return {"error": "Job not found"}
+        job = job[0]
+        
+        research = supabase.table("company_research").select("briefing, researched_at").eq("company", job["company"]).execute().data
+        
+        return {
+            **job,
+            "briefing": research[0]["briefing"] if research else None
+        }
+
     results = []
     for sim_score, job in top_jobs:
         analysis = score_job(resume_text, job)
@@ -80,3 +94,5 @@ def get_matches():
         })
 
     return results
+
+    
