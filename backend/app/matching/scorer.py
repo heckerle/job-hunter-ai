@@ -19,8 +19,7 @@ def summarize_job(job: dict) -> str:
     return " ".join(words)
 
 def summarize_resume(resume_text: str) -> str:
-    words = resume_text.split()[:300]
-    return " ".join(words)
+    return resume_text
 
 def score_job(resume_text: str, job: dict) -> dict:
     resume_summary = summarize_resume(resume_text)
