@@ -64,7 +64,7 @@ export default function Matches() {
                 <div className="text-right">
                   <div className="text-3xl font-bold text-white">{job.match_score}%</div>
                   <span className={`text-xs px-3 py-1 rounded-full mt-1 inline-block ${recommendationColors[job.recommendation]}`}>
-                    {job.recommendation.replace('_', ' ')}
+                    {job.recommendation?.replace('_', ' ')}
                   </span>
                 </div>
               </div>
