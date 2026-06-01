@@ -5,17 +5,11 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 
-const recommendationColors = {
-  strong_match: 'bg-green-900 text-green-300',
-  good_match: 'bg-blue-900 text-blue-300',
-  weak_match: 'bg-yellow-900 text-yellow-300',
-  poor_match: 'bg-red-900 text-red-300'
-}
-
 export default function JobDetail() {
   const { id } = useParams()
   const [job, setJob] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [researching, setResearching] = useState(false)
 
   useEffect(() => {
     fetch(`http://localhost:8000/jobs/${id}`)
@@ -25,6 +19,17 @@ export default function JobDetail() {
         setLoading(false)
       })
   }, [id])
+
+  const handleResearch = async () => {
+    setResearching(true)
+    const res = await fetch(
+      `http://localhost:8000/research/${encodeURIComponent(job.company)}?job_title=${encodeURIComponent(job.title)}`,
+      { method: 'POST' }
+    )
+    const data = await res.json()
+    setJob({ ...job, briefing: data.briefing })
+    setResearching(false)
+  }
 
   if (loading) return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
@@ -52,19 +57,29 @@ export default function JobDetail() {
               </p>
             )}
           </div>
-
           <a href={job.url} target="_blank"
             className="inline-block bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg transition text-sm">
             View Job Posting →
           </a>
         </div>
 
-        {job.briefing && (
+        {job.briefing ? (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
             <h2 className="text-lg font-semibold text-white mb-4">Company Intelligence</h2>
             <div className="text-gray-300 leading-relaxed text-sm prose prose-invert max-w-none">
-                <ReactMarkdown>{job.briefing}</ReactMarkdown>
+              <ReactMarkdown>{job.briefing}</ReactMarkdown>
             </div>
+          </div>
+        ) : (
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 mb-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Company Intelligence</h2>
+            <p className="text-gray-400 text-sm mb-4">No research available for this company yet.</p>
+            <button
+              onClick={handleResearch}
+              disabled={researching}
+              className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-400 text-white px-6 py-2 rounded-lg transition text-sm">
+              {researching ? 'Researching...' : 'Research this Company →'}
+            </button>
           </div>
         )}
 
