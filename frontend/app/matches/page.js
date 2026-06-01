@@ -11,15 +11,23 @@ const recommendationColors = {
   poor_match: 'bg-red-900 text-red-300'
 }
 
+let cachedMatches = null
+let cachedScroll = 0
+
 export default function Matches() {
-  const [matches, setMatches] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [matches, setMatches] = useState(cachedMatches || [])
+  const [loading, setLoading] = useState(!cachedMatches)
   const router = useRouter()
 
   useEffect(() => {
+    if (cachedMatches) {
+      window.scrollTo(0, cachedScroll)
+      return
+    }
     fetch('http://localhost:8000/jobs/matches')
       .then(res => res.json())
       .then(data => {
+        cachedMatches = data
         setMatches(data)
         setLoading(false)
       })
@@ -39,7 +47,11 @@ export default function Matches() {
       ) : (
         <div className="grid gap-6">
           {matches.map((job, i) => (
-            <div key={job.id} onClick={() => router.push(`/jobs/${job.id}`)} className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
+            <div key={job.id} onClick={() => {
+              cachedScroll = window.scrollY
+              router.push(`/jobs/${job.id}`)
+            }}
+              className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
@@ -86,7 +98,7 @@ export default function Matches() {
                 </div>
               </div>
 
-              <a href={job.url} target="_blank"
+              <a href={job.url} target="_blank" onClick={e => e.stopPropagation()}
                 className="inline-block text-sm bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition">
                 View Job Posting →
               </a>
