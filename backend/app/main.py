@@ -12,7 +12,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://job-hunter-ai-nine.vercel.app"
+        "https://job-hunter-ai-nine.vercel.app",
+        "https://job-hunter-ai-umber.vercel.app"
     ],
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,7 +63,7 @@ def get_matches():
         scored.append((score, job))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    top_jobs = scored[:5]
+    top_jobs = scored[:10]
 
     results = []
     for sim_score, job in top_jobs:

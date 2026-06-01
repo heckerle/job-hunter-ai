@@ -46,7 +46,7 @@ export default function Matches() {
         </div>
       ) : (
         <div className="grid gap-6">
-          {matches.map((job, i) => (
+          {matches.filter(job => job && job.recommendation).map((job, i) => (
             <div key={job.id} onClick={() => {
               cachedScroll = window.scrollY
               router.push(`/jobs/${job.id}`)
