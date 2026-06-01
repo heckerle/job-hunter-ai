@@ -62,7 +62,7 @@ def get_matches():
         scored.append((score, job))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    top_jobs = scored[:10]
+    top_jobs = scored[:5]
 
     results = []
     for sim_score, job in top_jobs:
