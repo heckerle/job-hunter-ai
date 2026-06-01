@@ -1,7 +1,6 @@
 venv/
 .env
 Credentials.txt
-*.txt
 __pycache__/
 *.pyc
 .DS_Store
