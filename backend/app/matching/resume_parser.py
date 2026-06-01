@@ -1,18 +1,18 @@
 import os
-import base64
 import tempfile
+import requests
 import pdfplumber
 from dotenv import load_dotenv
 
 load_dotenv("backend/.env")
 
 def extract_resume_text(pdf_path: str = None) -> str:
-    resume_base64 = os.getenv("RESUME_BASE64")
+    resume_url = os.getenv("RESUME_URL")
     
-    if resume_base64:
-        pdf_bytes = base64.b64decode(resume_base64)
+    if resume_url:
+        response = requests.get(resume_url)
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-            tmp.write(pdf_bytes)
+            tmp.write(response.content)
             tmp_path = tmp.name
         with pdfplumber.open(tmp_path) as pdf:
             text = ""

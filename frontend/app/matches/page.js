@@ -24,7 +24,7 @@ export default function Matches() {
       window.scrollTo(0, cachedScroll)
       return
     }
-    fetch('http://localhost:8000/jobs/matches')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
       .then(res => res.json())
       .then(data => {
         cachedMatches = data

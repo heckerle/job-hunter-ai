@@ -8,7 +8,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('http://localhost:8000/jobs')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
       .then(res => res.json())
       .then(data => {
         setJobs(data)

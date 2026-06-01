@@ -12,7 +12,7 @@ export default function JobDetail() {
   const [researching, setResearching] = useState(false)
 
   useEffect(() => {
-    fetch(`http://localhost:8000/jobs/${id}`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
       .then(res => res.json())
       .then(data => {
         setJob(data)
@@ -23,7 +23,7 @@ export default function JobDetail() {
   const handleResearch = async () => {
     setResearching(true)
     const res = await fetch(
-      `http://localhost:8000/research/${encodeURIComponent(job.company)}?job_title=${encodeURIComponent(job.title)}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/research/${encodeURIComponent(job.company)}?job_title=${encodeURIComponent(job.title)}`,
       { method: 'POST' }
     )
     const data = await res.json()
