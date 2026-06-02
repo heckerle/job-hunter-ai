@@ -50,7 +50,7 @@ export default function Matches() {
           {matches.filter(job => job && job.recommendation).map((job, i) => (
             <div key={job.id} onClick={() => {
               cachedScroll = window.scrollY
-              router.push(`/jobs/${job.id}`)
+              router.push(`/jobs/${job.job_id}`)
             }}
               className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
               <div className="flex justify-between items-start mb-4">
