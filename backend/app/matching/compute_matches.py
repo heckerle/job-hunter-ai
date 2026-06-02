@@ -63,7 +63,9 @@ def is_midwest(location):
 def is_remote(job):
     location = (job.get("location") or "").lower()
     title = (job.get("title") or "").lower()
-    return "remote" in location or "remote" in title
+    description = (job.get("description") or "").lower()
+    return "remote" in location or "remote" in title or "remote" in description[:500]
+
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))

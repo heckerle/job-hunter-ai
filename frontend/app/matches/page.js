@@ -12,7 +12,7 @@ const recommendationColors = {
 }
 
 let cachedMatches = null
-let cachedScroll = 0
+let cachedScroll = { midwest: 0, other: 0 }
 
 export default function Matches() {
   const [matches, setMatches] = useState(cachedMatches || [])
@@ -22,7 +22,7 @@ export default function Matches() {
 
   useEffect(() => {
     if (cachedMatches) {
-      window.scrollTo(0, cachedScroll)
+      window.scrollTo(0, cachedScroll[activeTab] || 0)
       return
     }
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/matches`)
@@ -75,7 +75,7 @@ export default function Matches() {
         <div className="grid gap-6">
           {displayed.map((job, i) => (
             <div key={job.id} onClick={() => {
-              cachedScroll = window.scrollY
+              cachedScroll[activeTab] = window.scrollY
               router.push(`/jobs/${job.job_id}`)
             }}
               className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
