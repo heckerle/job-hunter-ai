@@ -26,7 +26,7 @@ def compute_and_store_matches():
     print("Fetching jobs...")
     jobs = supabase.table("jobs").select(
         "id, title, company, location, salary_min, salary_max, url, description, embedding"
-    ).execute().data
+    ).eq("status", "active").execute().data
 
     print("Computing similarity scores...")
     scored = []
@@ -38,7 +38,20 @@ def compute_and_store_matches():
         scored.append((score, job))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    top_jobs = scored[:10]
+    EXCLUDE_KEYWORDS = ["clearance", "secret", "top secret", "ts/sci", "security clearance"]
+
+    seen = set()
+    top_jobs = []
+    for score, job in scored:
+        title_lower = job['title'].lower()
+        if any(kw in title_lower for kw in EXCLUDE_KEYWORDS):
+            continue
+        key = f"{job['company']}_{job['title']}"
+        if key not in seen:
+            seen.add(key)
+            top_jobs.append((score, job))
+        if len(top_jobs) == 10:
+            break
 
     print("Running Claude analysis on top 10...")
     
