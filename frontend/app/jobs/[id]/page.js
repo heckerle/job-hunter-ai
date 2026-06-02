@@ -12,7 +12,7 @@ export default function JobDetail() {
   const [researching, setResearching] = useState(false)
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/${id}`)
       .then(res => res.json())
       .then(data => {
         setJob(data)
