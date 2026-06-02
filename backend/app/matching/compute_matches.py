@@ -14,9 +14,31 @@ load_dotenv("backend/.env")
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
+EXCLUDE_KEYWORDS = ["clearance", "secret", "top secret", "ts/sci", "security clearance"]
+
+MIDWEST_KEYWORDS = ["il", "illinois", "wi", "wisconsin", "mn", "minnesota",
+                    "ia", "iowa", "mo", "missouri", "in", "indiana", "oh",
+                    "ohio", "mi", "michigan", "nd", "north dakota", "sd",
+                    "south dakota", "ne", "nebraska", "ks", "kansas",
+                    "chicago", "minneapolis", "milwaukee", "columbus",
+                    "detroit", "kansas city", "st. louis", "cincinnati",
+                    "indianapolis", "cleveland"]
+
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def is_midwest(location):
+    if not location:
+        return False
+    location_lower = location.lower()
+    return any(kw in location_lower for kw in MIDWEST_KEYWORDS)
+
+def meets_salary(job):
+    salary_min = job.get("salary_min")
+    if salary_min is None:
+        return True
+    return salary_min >= 75000
 
 def compute_and_store_matches():
     print("Parsing resume...")
@@ -38,31 +60,41 @@ def compute_and_store_matches():
         scored.append((score, job))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    EXCLUDE_KEYWORDS = ["clearance", "secret", "top secret", "ts/sci", "security clearance"]
 
     seen = set()
-    top_jobs = []
+    midwest_jobs = []
+    other_jobs = []
+
     for score, job in scored:
         title_lower = job['title'].lower()
         if any(kw in title_lower for kw in EXCLUDE_KEYWORDS):
             continue
+        if not meets_salary(job):
+            continue
         key = f"{job['company']}_{job['title']}"
-        if key not in seen:
-            seen.add(key)
-            top_jobs.append((score, job))
-        if len(top_jobs) == 10:
-            break
+        if key in seen:
+            continue
+        seen.add(key)
+        if is_midwest(job.get("location")):
+            midwest_jobs.append((score, job))
+        else:
+            other_jobs.append((score, job))
 
-    print("Running Claude analysis on top 10...")
-    
-    # Clear old matches first
+    top_midwest = midwest_jobs[:10]
+    top_other = other_jobs[:10]
+    top_jobs = top_midwest + top_other
+
+    print(f"Found {len(top_midwest)} Midwest matches and {len(top_other)} other matches")
+    print("Running Claude analysis...")
+
     supabase.table("matches").delete().neq("id", "00000000-0000-0000-0000-000000000000").execute()
 
     results = []
     for i, (sim_score, job) in enumerate(top_jobs):
-        print(f"Scoring {i+1}/10: {job['title']} at {job['company']}...")
+        region = "midwest" if (sim_score, job) in top_midwest else "other"
+        print(f"Scoring {i+1}/{len(top_jobs)}: {job['title']} at {job['company']} ({region})...")
         analysis = score_job(resume_text, job)
-        
+
         record = {
             "job_id": job["id"],
             "title": job["title"],
@@ -75,7 +107,8 @@ def compute_and_store_matches():
             "match_score": analysis["match_score"],
             "recommendation": analysis["recommendation"],
             "match_reasons": analysis["match_reasons"],
-            "gaps": analysis["gaps"]
+            "gaps": analysis["gaps"],
+            "region": region
         }
         supabase.table("matches").insert(record).execute()
         results.append(record)

@@ -17,7 +17,7 @@ def embed_text(text: str) -> list:
 
 def embed_all_jobs():
     print("Fetching jobs from Supabase...")
-    jobs = supabase.table("jobs").select("id, description").execute().data
+    jobs = supabase.table("jobs").select("id, description").eq("status", "active").execute().data
     print(f"Embedding {len(jobs)} jobs...")
     for i, job in enumerate(jobs):
         if not job.get("description"):

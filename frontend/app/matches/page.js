@@ -17,6 +17,7 @@ let cachedScroll = 0
 export default function Matches() {
   const [matches, setMatches] = useState(cachedMatches || [])
   const [loading, setLoading] = useState(!cachedMatches)
+  const [activeTab, setActiveTab] = useState('midwest')
   const router = useRouter()
 
   useEffect(() => {
@@ -33,20 +34,46 @@ export default function Matches() {
       })
   }, [])
 
+  const midwest = matches.filter(j => j.region === 'midwest')
+  const other = matches.filter(j => j.region === 'other')
+  const displayed = activeTab === 'midwest' ? midwest : other
+
   return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
       <Link href="/" className="text-gray-400 text-sm hover:text-white mb-6 block">← Back</Link>
       <h1 className="text-3xl font-bold text-blue-400 mb-2">Top Matches</h1>
-      <p className="text-gray-400 mb-8">AI-ranked jobs based on your resume</p>
+      <p className="text-gray-400 mb-6">AI-ranked jobs based on your resume</p>
+
+      <div className="flex gap-2 mb-8">
+        <button
+          onClick={() => setActiveTab('midwest')}
+          className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
+            activeTab === 'midwest'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-800 text-gray-400 hover:text-white'
+          }`}>
+          Midwest {midwest.length > 0 && `(${midwest.length})`}
+        </button>
+        <button
+          onClick={() => setActiveTab('other')}
+          className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
+            activeTab === 'other'
+              ? 'bg-blue-600 text-white'
+              : 'bg-gray-800 text-gray-400 hover:text-white'
+          }`}>
+          Everywhere Else {other.length > 0 && `(${other.length})`}
+        </button>
+      </div>
 
       {loading ? (
         <div className="text-gray-400">
-          <p>Analyzing your resume against all jobs...</p>
-          <p className="text-sm mt-2">This takes about 30 seconds</p>
+          <p>Loading matches...</p>
         </div>
+      ) : displayed.length === 0 ? (
+        <p className="text-gray-400">No matches found for this region.</p>
       ) : (
         <div className="grid gap-6">
-          {matches.filter(job => job && job.recommendation).map((job, i) => (
+          {displayed.map((job, i) => (
             <div key={job.id} onClick={() => {
               cachedScroll = window.scrollY
               router.push(`/jobs/${job.job_id}`)

@@ -13,15 +13,24 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+MIDWEST_STATES = ["illinois", "wisconsin", "minnesota", "iowa", "missouri", 
+                   "indiana", "ohio", "michigan", "north dakota", "south dakota",
+                   "nebraska", "kansas"]
+
 SEARCH_QUERIES = [
-    "entry level software developer",
-    "junior software engineer",
-    "junior frontend developer",
-    "junior full stack developer",
-    "new grad software engineer",
+    ("entry level software developer", "us"),
+    ("junior software engineer", "us"),
+    ("junior frontend developer", "us"),
+    ("junior full stack developer", "us"),
+    ("new grad software engineer", "us"),
+    ("software developer", "illinois"),
+    ("software developer", "minnesota"),
+    ("software developer", "wisconsin"),
+    ("software engineer", "ohio"),
+    ("software engineer", "michigan"),
 ]
 
-def fetch_jobs_from_adzuna(query, pages=5):
+def fetch_jobs_from_adzuna(query, location="us", pages=3):
     jobs = []
     for page in range(1, pages + 1):
         url = f"https://api.adzuna.com/v1/api/jobs/us/search/{page}"
@@ -29,6 +38,7 @@ def fetch_jobs_from_adzuna(query, pages=5):
             "app_id": ADZUNA_APP_ID,
             "app_key": ADZUNA_API_KEY,
             "what": query,
+            "where": location,
             "results_per_page": 20,
             "content-type": "application/json"
         }
@@ -50,9 +60,9 @@ def sync():
     all_fetched_urls = set()
     new_jobs = []
 
-    for query in SEARCH_QUERIES:
-        print(f"Fetching: '{query}'...")
-        jobs = fetch_jobs_from_adzuna(query, pages=5)
+    for query, location in SEARCH_QUERIES:
+        print(f"Fetching: '{query}' in '{location}'...")
+        jobs = fetch_jobs_from_adzuna(query, location, pages=3)
         for job in jobs:
             url = job.get("redirect_url")
             if not url:
