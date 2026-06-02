@@ -13,16 +13,17 @@ const recommendationColors = {
 
 let cachedMatches = null
 let cachedScroll = { midwest: 0, other: 0 }
+let cachedTab = 'midwest'
 
 export default function Matches() {
   const [matches, setMatches] = useState(cachedMatches || [])
   const [loading, setLoading] = useState(!cachedMatches)
-  const [activeTab, setActiveTab] = useState('midwest')
+  const [activeTab, setActiveTab] = useState(cachedTab)
   const router = useRouter()
 
   useEffect(() => {
     if (cachedMatches) {
-      window.scrollTo(0, cachedScroll[activeTab] || 0)
+      window.scrollTo(0, cachedScroll[cachedTab] || 0)
       return
     }
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/matches`)
@@ -46,7 +47,7 @@ export default function Matches() {
 
       <div className="flex gap-2 mb-8">
         <button
-          onClick={() => setActiveTab('midwest')}
+          onClick={() => { cachedTab = 'midwest'; setActiveTab('midwest') }}
           className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
             activeTab === 'midwest'
               ? 'bg-blue-600 text-white'
@@ -55,7 +56,7 @@ export default function Matches() {
           Midwest {midwest.length > 0 && `(${midwest.length})`}
         </button>
         <button
-          onClick={() => setActiveTab('other')}
+          onClick={() => { cachedTab = 'other'; setActiveTab('other') }}
           className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
             activeTab === 'other'
               ? 'bg-blue-600 text-white'
@@ -76,6 +77,7 @@ export default function Matches() {
           {displayed.map((job, i) => (
             <div key={job.id} onClick={() => {
               cachedScroll[activeTab] = window.scrollY
+              cachedTab = activeTab
               router.push(`/jobs/${job.job_id}`)
             }}
               className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
