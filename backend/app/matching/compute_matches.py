@@ -39,25 +39,31 @@ MIDWEST_STATES = {
 geolocator = Nominatim(user_agent="job-hunter-ai")
 geo_cache = {}
 
-def is_midwest(location):
+def get_state(location):
     if not location:
-        return False
+        return None
     if location in geo_cache:
         return geo_cache[location]
     try:
         result = geolocator.geocode(location + ", USA", addressdetails=True, language="en")
         if result and result.raw.get("address"):
-            state = result.raw["address"].get("state", "")
-            is_mw = state in MIDWEST_STATES
-            geo_cache[location] = is_mw
-            time.sleep(1)  # Nominatim rate limit: 1 request/second
-            return is_mw
-    except GeocoderTimedOut:
+            state = result.raw["address"].get("state", None)
+            geo_cache[location] = state
+            time.sleep(1)
+            return state
+    except Exception:
         pass
-    geo_cache[location] = False
-    return False
+    geo_cache[location] = None
+    return None
 
+def is_midwest(location):
+    state = get_state(location)
+    return state in MIDWEST_STATES if state else False
 
+def is_remote(job):
+    location = (job.get("location") or "").lower()
+    title = (job.get("title") or "").lower()
+    return "remote" in location or "remote" in title
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
@@ -141,7 +147,9 @@ def compute_and_store_matches():
             "recommendation": analysis["recommendation"],
             "match_reasons": analysis["match_reasons"],
             "gaps": analysis["gaps"],
-            "region": region
+            "region": region,
+            "state": get_state(job.get("location")),
+            "is_remote": is_remote(job),
         }
         supabase.table("matches").insert(record).execute()
         results.append(record)

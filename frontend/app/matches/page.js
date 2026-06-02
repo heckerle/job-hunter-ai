@@ -86,7 +86,19 @@ export default function Matches() {
                     <h2 className="text-lg font-semibold text-white">{job.title}</h2>
                   </div>
                   <p className="text-blue-400 font-medium">{job.company}</p>
-                  <p className="text-gray-400 text-sm mt-1">{job.location}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-gray-400 text-sm">{job.location}</p>
+                    {job.state && (
+                      <span className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded-full">
+                        {job.state}
+                      </span>
+                    )}
+                    {job.is_remote && (
+                      <span className="text-xs bg-green-900 text-green-300 px-2 py-0.5 rounded-full">
+                        Remote
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold text-white">{job.match_score}%</div>
