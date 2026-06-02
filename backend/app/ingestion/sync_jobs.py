@@ -28,6 +28,11 @@ SEARCH_QUERIES = [
     ("software developer", "wisconsin"),
     ("software engineer", "ohio"),
     ("software engineer", "michigan"),
+    ("software engineer", "indiana"),
+    ("software developer", "missouri"),
+    ("junior developer", "illinois"),
+    ("junior developer", "minnesota"),
+    ("software engineer", "iowa"),
 ]
 
 def fetch_jobs_from_adzuna(query, location="us", pages=3):

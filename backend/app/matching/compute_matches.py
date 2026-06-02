@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import numpy as np
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
@@ -20,26 +21,69 @@ EXCLUDE_KEYWORDS = [
     "lead ", "architect", "head of"
 ]
 
-MIDWEST_STATES = [
-    "illinois", " il,", " il ", "chicago",
-    "wisconsin", " wi,", " wi ", "milwaukee", "madison",
-    "minnesota", " mn,", " mn ", "minneapolis", "st. paul", "saint paul", "duluth",
-    "iowa", " ia,", " ia ", "des moines", "cedar rapids",
-    "missouri", " mo,", " mo ", "kansas city", "st. louis", "saint louis", "springfield",
-    "indiana", " in,", " in ", "indianapolis", "fort wayne",
-    "ohio", " oh,", " oh ", "columbus", "cleveland", "cincinnati", "toledo",
-    "michigan", " mi,", " mi ", "detroit", "grand rapids", "ann arbor",
-    "north dakota", " nd,", " nd ", "fargo", "bismarck",
-    "south dakota", " sd,", " sd ", "sioux falls", "rapid city",
-    "nebraska", " ne,", " ne ", "omaha", "lincoln",
-    "kansas", " ks,", " ks ", "wichita", "topeka",
-]
+import re
+
+MIDWEST_STATE_ABBRS = {
+    "IL", "WI", "MN", "IA", "MO", "IN", "OH", "MI", "ND", "SD", "NE", "KS"
+}
+
+MIDWEST_STATE_NAMES = {
+    "illinois", "wisconsin", "minnesota", "iowa", "missouri",
+    "indiana", "ohio", "michigan", "north dakota", "south dakota",
+    "nebraska", "kansas"
+}
 
 def is_midwest(location):
     if not location:
         return False
-    location_lower = " " + location.lower() + " "
-    return any(kw.lower() in location_lower for kw in MIDWEST_STATES)
+    location_lower = location.lower()
+    
+    # Check full state names
+    for state in MIDWEST_STATE_NAMES:
+        if state in location_lower:
+            return True
+    
+    # Check state abbreviations (e.g. "Chicago, IL" or "IL,")
+    abbr_pattern = r'\b(' + '|'.join(MIDWEST_STATE_ABBRS) + r')\b'
+    if re.search(abbr_pattern, location, re.IGNORECASE):
+        return True
+    
+    # Check county names — Adzuna often uses "City, County Name County"
+    # Extract the county and look it up
+    parts = [p.strip() for p in location.split(',')]
+    
+    MIDWEST_COUNTIES = {
+        # Wisconsin
+        "waukesha county", "milwaukee county", "dane county", "brown county",
+        "racine county", "outagamie county", "winnebago county", "kenosha county",
+        # Illinois
+        "cook county", "dupage county", "lake county", "will county", "kane county",
+        # Ohio
+        "franklin county", "cuyahoga county", "hamilton county", "summit county",
+        "montgomery county", "lucas county", "stark county",
+        # Michigan
+        "wayne county", "oakland county", "macomb county", "kent county",
+        "genesee county", "ingham county",
+        # Minnesota
+        "hennepin county", "ramsey county", "dakota county", "anoka county",
+        "washington county", "olmsted county",
+        # Missouri
+        "st. louis county", "jackson county", "jefferson county", "st. charles county",
+        # Indiana
+        "marion county", "lake county", "allen county", "hamilton county",
+        # Iowa
+        "polk county", "linn county", "scott county", "black hawk county",
+        # Nebraska
+        "douglas county", "lancaster county", "sarpy county",
+        # Kansas
+        "johnson county", "wyandotte county", "sedgwick county",
+    }
+    
+    for part in parts:
+        if part.lower() in MIDWEST_COUNTIES:
+            return True
+    
+    return False
 
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)
@@ -92,7 +136,7 @@ def compute_and_store_matches():
         else:
             other_jobs.append((score, job))
 
-    top_midwest = midwest_jobs[:10]
+    top_midwest = midwest_jobs[:20]
     top_other = other_jobs[:10]
     top_jobs = top_midwest + top_other
 
