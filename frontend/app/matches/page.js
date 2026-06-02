@@ -24,9 +24,10 @@ export default function Matches() {
       window.scrollTo(0, cachedScroll)
       return
     }
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/matches`)
       .then(res => res.json())
       .then(data => {
+        console.log('matches data:', JSON.stringify(data[0]))
         cachedMatches = data
         setMatches(data)
         setLoading(false)
