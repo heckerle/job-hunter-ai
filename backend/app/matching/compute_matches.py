@@ -14,25 +14,37 @@ load_dotenv("backend/.env")
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-EXCLUDE_KEYWORDS = ["clearance", "secret", "top secret", "ts/sci", "security clearance"]
+EXCLUDE_KEYWORDS = [
+    "clearance", "secret", "top secret", "ts/sci", "security clearance",
+    "senior", "sr.", "sr ", "principal", "staff ", "manager", "director",
+    "lead ", "architect", "head of"
+]
 
-MIDWEST_KEYWORDS = ["il", "illinois", "wi", "wisconsin", "mn", "minnesota",
-                    "ia", "iowa", "mo", "missouri", "in", "indiana", "oh",
-                    "ohio", "mi", "michigan", "nd", "north dakota", "sd",
-                    "south dakota", "ne", "nebraska", "ks", "kansas",
-                    "chicago", "minneapolis", "milwaukee", "columbus",
-                    "detroit", "kansas city", "st. louis", "cincinnati",
-                    "indianapolis", "cleveland"]
+MIDWEST_STATES = [
+    "illinois", " il,", " il ", "chicago",
+    "wisconsin", " wi,", " wi ", "milwaukee", "madison",
+    "minnesota", " mn,", " mn ", "minneapolis", "st. paul", "saint paul", "duluth",
+    "iowa", " ia,", " ia ", "des moines", "cedar rapids",
+    "missouri", " mo,", " mo ", "kansas city", "st. louis", "saint louis", "springfield",
+    "indiana", " in,", " in ", "indianapolis", "fort wayne",
+    "ohio", " oh,", " oh ", "columbus", "cleveland", "cincinnati", "toledo",
+    "michigan", " mi,", " mi ", "detroit", "grand rapids", "ann arbor",
+    "north dakota", " nd,", " nd ", "fargo", "bismarck",
+    "south dakota", " sd,", " sd ", "sioux falls", "rapid city",
+    "nebraska", " ne,", " ne ", "omaha", "lincoln",
+    "kansas", " ks,", " ks ", "wichita", "topeka",
+]
+
+def is_midwest(location):
+    if not location:
+        return False
+    location_lower = " " + location.lower() + " "
+    return any(kw.lower() in location_lower for kw in MIDWEST_STATES)
 
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-def is_midwest(location):
-    if not location:
-        return False
-    location_lower = location.lower()
-    return any(kw in location_lower for kw in MIDWEST_KEYWORDS)
 
 def meets_salary(job):
     salary_min = job.get("salary_min")
@@ -94,6 +106,10 @@ def compute_and_store_matches():
         region = "midwest" if (sim_score, job) in top_midwest else "other"
         print(f"Scoring {i+1}/{len(top_jobs)}: {job['title']} at {job['company']} ({region})...")
         analysis = score_job(resume_text, job)
+        
+        if analysis["match_score"] < 50:
+            print(f"  → {analysis['match_score']}% {analysis['recommendation']} (skipped)")
+            continue
 
         record = {
             "job_id": job["id"],
