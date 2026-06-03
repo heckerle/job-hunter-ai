@@ -5,8 +5,6 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 from supabase import create_client
-from geopy.geocoders import Photon
-from geopy.exc import GeocoderTimedOut
 import time
 
 sys.path.append("backend/app/matching")
@@ -36,29 +34,9 @@ MIDWEST_STATES = {
     "Nebraska", "Kansas"
 }
 
-geolocator = Photon(user_agent="job-hunter-ai")
-geo_cache = {}
-
-def get_state(location):
-    if not location:
-        return None
-    if location in geo_cache:
-        return geo_cache[location]
-    try:
-        result = geolocator.geocode(location + ", USA", language="en")
-        if result and result.raw.get("properties"):
-            state = result.raw["properties"].get("state", None)
-            geo_cache[location] = state
-            time.sleep(1)
-            return state
-    except Exception:
-        pass
-    geo_cache[location] = None
-    return None
-
-def is_midwest(location):
-    state = get_state(location)
-    return state in MIDWEST_STATES if state else False
+def is_midwest(job):
+    state = job.get("state") or ""
+    return state in MIDWEST_STATES
 
 def is_remote(job):
     location = (job.get("location") or "").lower()
@@ -84,7 +62,7 @@ def compute_and_store_matches():
 
     print("Fetching jobs...")
     jobs = supabase.table("jobs").select(
-        "id, title, company, location, salary_min, salary_max, url, description, embedding"
+        "id, title, company, location, state, salary_min, salary_max, url, description, embedding"
     ).eq("status", "active").execute().data
 
     print("Computing similarity scores...")
@@ -112,7 +90,7 @@ def compute_and_store_matches():
         if key in seen:
             continue
         seen.add(key)
-        if is_midwest(job.get("location")):
+        if is_midwest(job):
             midwest_jobs.append((score, job))
         else:
             other_jobs.append((score, job))
@@ -150,7 +128,7 @@ def compute_and_store_matches():
             "match_reasons": analysis["match_reasons"],
             "gaps": analysis["gaps"],
             "region": region,
-            "state": get_state(job.get("location")),
+            "state": job.get("state"),
             "is_remote": is_remote(job),
         }
         supabase.table("matches").insert(record).execute()

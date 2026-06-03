@@ -74,10 +74,15 @@ def sync():
                 continue
             all_fetched_urls.add(url)
             if url not in existing_urls:
+                location_data = job.get("location", {})
+                area = location_data.get("area", [])
+                state = area[1] if len(area) > 1 else None
+
                 new_jobs.append({
                     "title": job.get("title"),
                     "company": job.get("company", {}).get("display_name"),
-                    "location": job.get("location", {}).get("display_name"),
+                    "location": location_data.get("display_name"),
+                    "state": state,
                     "url": url,
                     "description": job.get("description"),
                     "source": "adzuna",
