@@ -5,7 +5,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from dotenv import load_dotenv
 from supabase import create_client
-from geopy.geocoders import Nominatim
+from geopy.geocoders import Photon
 from geopy.exc import GeocoderTimedOut
 import time
 
@@ -36,7 +36,7 @@ MIDWEST_STATES = {
     "Nebraska", "Kansas"
 }
 
-geolocator = Nominatim(user_agent="job-hunter-ai")
+geolocator = Photon(user_agent="job-hunter-ai")
 geo_cache = {}
 
 def get_state(location):
@@ -45,9 +45,9 @@ def get_state(location):
     if location in geo_cache:
         return geo_cache[location]
     try:
-        result = geolocator.geocode(location + ", USA", addressdetails=True, language="en")
-        if result and result.raw.get("address"):
-            state = result.raw["address"].get("state", None)
+        result = geolocator.geocode(location + ", USA", language="en")
+        if result and result.raw.get("properties"):
+            state = result.raw["properties"].get("state", None)
             geo_cache[location] = state
             time.sleep(1)
             return state
