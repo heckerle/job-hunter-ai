@@ -39,10 +39,15 @@ def is_midwest(job):
     return state in MIDWEST_STATES
 
 def is_remote(job):
-    location = (job.get("location") or "").lower()
+    location = (job.get("location") or "").lower().strip()
     title = (job.get("title") or "").lower()
     description = (job.get("description") or "").lower()
-    return "remote" in location or "remote" in title or "remote" in description[:500]
+    return (
+        location == "us" or
+        "remote" in location or
+        "remote" in title or
+        "remote" in description[:500]
+    )
 
 def cosine_similarity(a, b):
     a, b = np.array(a), np.array(b)

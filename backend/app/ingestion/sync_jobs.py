@@ -77,11 +77,13 @@ def sync():
                 location_data = job.get("location", {})
                 area = location_data.get("area", [])
                 state = area[1] if len(area) > 1 else None
+                city = area[3] if len(area) > 3 else None
+                clean_location = f"{city}, {state}" if city and state else location_data.get("display_name")
 
                 new_jobs.append({
                     "title": job.get("title"),
                     "company": job.get("company", {}).get("display_name"),
-                    "location": location_data.get("display_name"),
+                    "location": clean_location,
                     "state": state,
                     "url": url,
                     "description": job.get("description"),
