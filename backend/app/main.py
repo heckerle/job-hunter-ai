@@ -29,7 +29,7 @@ def root():
 def get_jobs():
     jobs = supabase.table("jobs").select(
         "id, title, company, location, salary_min, salary_max, url, status, fetched_at"
-    ).order("fetched_at", desc=True).limit(50).execute()
+    ).eq("status", "active").order("fetched_at", desc=True).execute()
     return jobs.data
 
 @app.get("/jobs/matches")

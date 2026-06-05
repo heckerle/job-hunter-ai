@@ -6,6 +6,8 @@ import Link from 'next/link'
 export default function Home() {
   const [jobs, setJobs] = useState([])
   const [loading, setLoading] = useState(true)
+  const [selectedStates, setSelectedStates] = useState([])
+  const [minSalary, setMinSalary] = useState('')
 
   useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`)
@@ -15,6 +17,20 @@ export default function Home() {
         setLoading(false)
       })
   }, [])
+
+  const stateOptions = [...new Set(jobs.map(j => j.state).filter(Boolean))].sort()
+
+  const filtered = jobs.filter(j => {
+    if (selectedStates.length > 0 && !selectedStates.includes(j.state)) return false
+    if (minSalary && j.salary_min && j.salary_min < Number(minSalary)) return false
+    return true
+  })
+
+  function toggleState(state) {
+    setSelectedStates(prev =>
+      prev.includes(state) ? prev.filter(s => s !== state) : [...prev, state]
+    )
+  }
 
   return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
@@ -45,13 +61,58 @@ export default function Home() {
           </div>
         </div>
 
-        <h2 className="text-xl font-semibold text-white mb-4">Recent Jobs</h2>
+        {/* Filters */}
+        <div className="flex flex-wrap gap-4 mb-6">
+          {stateOptions.length > 0 && (
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-gray-500 uppercase">State</span>
+              {stateOptions.map(state => (
+                <button
+                  key={state}
+                  onClick={() => toggleState(state)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                    selectedStates.includes(state)
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {state}
+                </button>
+              ))}
+              {selectedStates.length > 0 && (
+                <button onClick={() => setSelectedStates([])} className="text-xs text-gray-500 hover:text-white ml-1">
+                  clear
+                </button>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 uppercase">Min Salary</span>
+            <input
+              type="number"
+              value={minSalary}
+              onChange={e => setMinSalary(e.target.value)}
+              placeholder="e.g. 80000"
+              className="bg-gray-800 text-white text-sm px-3 py-1 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 w-36"
+            />
+            {minSalary && (
+              <button onClick={() => setMinSalary('')} className="text-xs text-gray-500 hover:text-white">
+                clear
+              </button>
+            )}
+          </div>
+        </div>
+
+        <h2 className="text-xl font-semibold text-white mb-4">
+          Active Jobs {!loading && <span className="text-gray-500 font-normal text-base">({filtered.length})</span>}
+        </h2>
 
         {loading ? (
           <p className="text-gray-400">Loading jobs...</p>
         ) : (
           <div className="grid gap-4">
-            {jobs.slice(0, 10).map(job => (
+            {filtered.map(job => (
               <div key={job.id} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
                 <div className="flex justify-between items-start">
                   <div>
@@ -66,9 +127,6 @@ export default function Home() {
                   )}
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <span className="text-xs bg-gray-800 text-gray-300 px-3 py-1 rounded-full">
-                    {job.status}
-                  </span>
                   <a href={job.url} target="_blank"
                     className="text-xs bg-blue-900 text-blue-300 px-3 py-1 rounded-full hover:bg-blue-800">
                     View posting →

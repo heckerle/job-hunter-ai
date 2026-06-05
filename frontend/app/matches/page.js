@@ -18,7 +18,6 @@ export default function Matches() {
   const [matches, setMatches] = useState(cachedMatches || [])
   const [loading, setLoading] = useState(!cachedMatches)
   const [selectedStates, setSelectedStates] = useState([])
-  const [minSalary, setMinSalary] = useState('')
   const router = useRouter()
 
   useEffect(() => {
@@ -37,11 +36,9 @@ export default function Matches() {
 
   const stateOptions = [...new Set(matches.map(j => j.state).filter(Boolean))].sort()
 
-  const filtered = matches.filter(j => {
-    if (selectedStates.length > 0 && !selectedStates.includes(j.state)) return false
-    if (minSalary && j.salary_min && j.salary_min < Number(minSalary)) return false
-    return true
-  })
+  const filtered = matches.filter(j =>
+    selectedStates.length === 0 || selectedStates.includes(j.state)
+  )
 
   function toggleState(state) {
     setSelectedStates(prev =>
@@ -55,53 +52,30 @@ export default function Matches() {
       <h1 className="text-3xl font-bold text-blue-400 mb-2">Top Matches</h1>
       <p className="text-gray-400 mb-6">AI-ranked jobs based on your resume</p>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-8">
-        {/* State filter */}
-        {stateOptions.length > 0 && (
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-xs text-gray-500 uppercase">State</span>
-            {stateOptions.map(state => (
-              <button
-                key={state}
-                onClick={() => toggleState(state)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                  selectedStates.includes(state)
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-800 text-gray-400 hover:text-white'
-                }`}
-              >
-                {state}
-              </button>
-            ))}
-            {selectedStates.length > 0 && (
-              <button
-                onClick={() => setSelectedStates([])}
-                className="text-xs text-gray-500 hover:text-white ml-1"
-              >
-                clear
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Min salary filter */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 uppercase">Min Salary</span>
-          <input
-            type="number"
-            value={minSalary}
-            onChange={e => setMinSalary(e.target.value)}
-            placeholder="e.g. 80000"
-            className="bg-gray-800 text-white text-sm px-3 py-1 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 w-36"
-          />
-          {minSalary && (
-            <button onClick={() => setMinSalary('')} className="text-xs text-gray-500 hover:text-white">
+      {/* State filter */}
+      {stateOptions.length > 0 && (
+        <div className="flex flex-wrap gap-2 items-center mb-8">
+          <span className="text-xs text-gray-500 uppercase">State</span>
+          {stateOptions.map(state => (
+            <button
+              key={state}
+              onClick={() => toggleState(state)}
+              className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                selectedStates.includes(state)
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:text-white'
+              }`}
+            >
+              {state}
+            </button>
+          ))}
+          {selectedStates.length > 0 && (
+            <button onClick={() => setSelectedStates([])} className="text-xs text-gray-500 hover:text-white ml-1">
               clear
             </button>
           )}
         </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="text-gray-400">
