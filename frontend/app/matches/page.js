@@ -12,18 +12,18 @@ const recommendationColors = {
 }
 
 let cachedMatches = null
-let cachedScroll = { midwest: 0, other: 0 }
-let cachedTab = 'midwest'
+let cachedScroll = 0
 
 export default function Matches() {
   const [matches, setMatches] = useState(cachedMatches || [])
   const [loading, setLoading] = useState(!cachedMatches)
-  const [activeTab, setActiveTab] = useState(cachedTab)
+  const [selectedStates, setSelectedStates] = useState([])
+  const [minSalary, setMinSalary] = useState('')
   const router = useRouter()
 
   useEffect(() => {
     if (cachedMatches) {
-      window.scrollTo(0, cachedScroll[cachedTab] || 0)
+      window.scrollTo(0, cachedScroll)
       return
     }
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs/matches`)
@@ -35,9 +35,19 @@ export default function Matches() {
       })
   }, [])
 
-  const midwest = matches.filter(j => j.region === 'midwest')
-  const other = matches.filter(j => j.region === 'other')
-  const displayed = activeTab === 'midwest' ? midwest : other
+  const stateOptions = [...new Set(matches.map(j => j.state).filter(Boolean))].sort()
+
+  const filtered = matches.filter(j => {
+    if (selectedStates.length > 0 && !selectedStates.includes(j.state)) return false
+    if (minSalary && j.salary_min && j.salary_min < Number(minSalary)) return false
+    return true
+  })
+
+  function toggleState(state) {
+    setSelectedStates(prev =>
+      prev.includes(state) ? prev.filter(s => s !== state) : [...prev, state]
+    )
+  }
 
   return (
     <main className="min-h-screen bg-gray-950 text-white p-8">
@@ -45,39 +55,65 @@ export default function Matches() {
       <h1 className="text-3xl font-bold text-blue-400 mb-2">Top Matches</h1>
       <p className="text-gray-400 mb-6">AI-ranked jobs based on your resume</p>
 
-      <div className="flex gap-2 mb-8">
-        <button
-          onClick={() => { cachedTab = 'midwest'; setActiveTab('midwest') }}
-          className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
-            activeTab === 'midwest'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400 hover:text-white'
-          }`}>
-          Midwest {midwest.length > 0 && `(${midwest.length})`}
-        </button>
-        <button
-          onClick={() => { cachedTab = 'other'; setActiveTab('other') }}
-          className={`px-6 py-2 rounded-lg text-sm font-medium transition ${
-            activeTab === 'other'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-800 text-gray-400 hover:text-white'
-          }`}>
-          Everywhere Else {other.length > 0 && `(${other.length})`}
-        </button>
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4 mb-8">
+        {/* State filter */}
+        {stateOptions.length > 0 && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-xs text-gray-500 uppercase">State</span>
+            {stateOptions.map(state => (
+              <button
+                key={state}
+                onClick={() => toggleState(state)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition ${
+                  selectedStates.includes(state)
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-800 text-gray-400 hover:text-white'
+                }`}
+              >
+                {state}
+              </button>
+            ))}
+            {selectedStates.length > 0 && (
+              <button
+                onClick={() => setSelectedStates([])}
+                className="text-xs text-gray-500 hover:text-white ml-1"
+              >
+                clear
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Min salary filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 uppercase">Min Salary</span>
+          <input
+            type="number"
+            value={minSalary}
+            onChange={e => setMinSalary(e.target.value)}
+            placeholder="e.g. 80000"
+            className="bg-gray-800 text-white text-sm px-3 py-1 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 w-36"
+          />
+          {minSalary && (
+            <button onClick={() => setMinSalary('')} className="text-xs text-gray-500 hover:text-white">
+              clear
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
         <div className="text-gray-400">
           <p>Loading matches...</p>
         </div>
-      ) : displayed.length === 0 ? (
-        <p className="text-gray-400">No matches found for this region.</p>
+      ) : filtered.length === 0 ? (
+        <p className="text-gray-400">No matches found.</p>
       ) : (
         <div className="grid gap-6">
-          {displayed.map((job, i) => (
+          {filtered.map((job, i) => (
             <div key={job.id} onClick={() => {
-              cachedScroll[activeTab] = window.scrollY
-              cachedTab = activeTab
+              cachedScroll = window.scrollY
               router.push(`/jobs/${job.job_id}`)
             }}
               className="bg-gray-900 border border-gray-800 rounded-xl p-6 cursor-pointer hover:border-gray-600 transition">
